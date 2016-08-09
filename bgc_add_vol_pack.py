@@ -1,4 +1,5 @@
-#!/usr/bin/python3
+#!/usr/local/bin/python3 
+#/usr/bin/python3
 # -*- coding: utf-8 -*-
 
 """
@@ -23,7 +24,7 @@ Changelog :
     - Headless mode added as optional parameter
     - repeat and packSize are optional with default value to 1 pack of 150 GB
 """
-
+import time
 import argparse
 parser = argparse.ArgumentParser(description='Add extra data volume pack to Belgacom Internet')
 parser.add_argument('login', type=str, help='Belgacom login email')
@@ -53,7 +54,8 @@ if args.headless :
   display = Display(visible=0, size=(1920, 1080))
   display.start()
 
-browser = webdriver.Firefox()
+#browser = webdriver.Firefox()
+browser = webdriver.Chrome('/Users/ec/Applications/chromedriver')
 
 print ("Login ...")
 browser.get('https://www.belgacom.be/login/fr/?ru=https%3A%2F%2Fadmit.belgacom.be%2F&pv=fls')
@@ -66,6 +68,7 @@ wait = WebDriverWait(browser, 20)
 wait.until(lambda browser: browser.find_element_by_xpath('//div[@data-tms-id="TMS_myBillAndProducts"]'))
 print ("Login done")
 
+browser.find_element_by_xpath('//a[contains(@class, "oms-close-dialog")]').click()
 browser.find_element_by_xpath('//i[contains(@class, "icon-Internetlaptop")]').click()
 
 for i in range(args.repeat):
@@ -80,8 +83,9 @@ for i in range(args.repeat):
     if extraVol in element.get_attribute("innerHTML"):
       element.click()
       break
-
+  time.sleep(1)
   myProduct = "myProducts/myOrder?selectedOption=hbs_volume_pack_" + args.packSize + "_free"
+  print("My Product = ",myProduct)
   browser.find_element_by_xpath('//a[contains(@href,"' + myProduct + '")]').click()
 
   wait.until(lambda browser: browser.find_element_by_xpath('//a[contains(@class,"pcp-order-next")]'))
