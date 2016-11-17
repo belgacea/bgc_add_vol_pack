@@ -32,6 +32,10 @@ parser.add_argument('password', type=str, help='Belgacom password')
 parser.add_argument('--repeat', type=int, default=1, help='Number of volume packs to add (1 pack by default)')
 parser.add_argument('--packSize', type=str, default='150', help='Volume size of the pack to add (150 GB by default)')
 parser.add_argument('--headless', type=int, default=1, help='Headless mode (enabled by default ; using xvfb)') #, action='store_true'
+parser.add_argument('--product', type=str, default='', help='Product number (eg: fc123456)') #, action='store_true'
+parser.add_argument('--pack', type=str, default='2187090', help='PackReferenceId') #, action='store_true'
+
+
 args = parser.parse_args()
 
 try:
@@ -47,7 +51,7 @@ if args.headless :
   try:
     import pyvirtualdisplay
   except ImportError:
-    print ("Cannot import pyvirtualdisplay. Try: $ pip3 install --user pyvirtualdisplay")
+    print ("Cannot import pyvirtualdisplay. Try: $! pip3 install --user pyvirtualdisplay")
     sys.exit()
 
   from pyvirtualdisplay import Display
@@ -58,18 +62,51 @@ if args.headless :
 browser = webdriver.Chrome('/Users/ec/Applications/chromedriver')
 
 print ("Login ...")
-browser.get('https://www.belgacom.be/login/fr/?ru=https%3A%2F%2Fadmit.belgacom.be%2F&pv=fls')
+#browser.get('https://www.belgacom.be/login/fr/?ru=https%3A%2F%2Fadmit.belgacom.be%2F&pv=fls')
+browser.get('http://www.proximus.be/fr/personal/?')
+time.sleep(3)
+wait = WebDriverWait(browser, 30)
+wait.until(lambda browser: browser.find_element_by_xpath('//a[contains(@class, "close-reveal-modal")]'))
+browser.find_element_by_xpath('//a[contains(@class, "close-reveal-modal")]').click()
+wait.until(lambda browser: browser.find_element_by_xpath('//a[contains(@class, "rs-btn rs-btn-neg right")]'))
+browser.find_element_by_xpath('//a[contains(@class, "rs-btn rs-btn-neg right")]').click()
+
+
+wait.until(lambda browser: browser.find_element_by_xpath('//iframe[@name="loginIframe"]'))
 browser.switch_to_frame(browser.find_element_by_xpath('//iframe[@name="loginIframe"]'))
 browser.switch_to_frame(browser.find_element_by_xpath('//iframe[@name="frame"]'))
 browser.find_element_by_xpath('//input[@id="loginForm:userName"]').send_keys(args.login)
 browser.find_element_by_xpath('//input[@id="loginForm:password"]').send_keys(args.password)
 browser.find_element_by_xpath('//input[@id="loginForm:continue"]').click()
-wait = WebDriverWait(browser, 20)
-wait.until(lambda browser: browser.find_element_by_xpath('//div[@data-tms-id="TMS_myBillAndProducts"]'))
+
+wait.until(lambda browser: browser.find_element_by_xpath('//a[@id="eservicesUrlId"]'))
+browser.find_element_by_xpath('//a[@id="eservicesUrlId"]').click()
+
+
+
+wait.until(lambda browser: browser.find_element_by_xpath('//a[text()="Vers MyProximus"]'))
+browser.find_element_by_xpath('//a[text()="Vers MyProximus"]').click()
 print ("Login done")
 
-browser.find_element_by_xpath('//a[contains(@class, "oms-close-dialog")]').click()
-browser.find_element_by_xpath('//i[contains(@class, "icon-Internetlaptop")]').click()
+
+
+wait.until(lambda browser: browser.find_element_by_xpath('//a[text()="Mes produits"]'))
+browser.find_element_by_xpath('//a[text()="Mes produits"]').click()
+
+print ("jusq'ici c'est bon")
+
+real_url = "https://admit.belgacom.be/eservices/wps/myportal/myProducts?category=INTERNET&subcategory=FIXED_INTERNET&packReferenceId={0}&product={1}".format(args.pack,args.product)
+browser.get(real_url)
+
+
+#wait.until(lambda browser: browser.find_element_by_xpath('//a[contains(@href,"category=INTERNET&subcategory=FIXED_INTERNET"]'))
+#browser.find_element_by_xpath('//a[contains(@href,"category=INTERNET&subcategory=FIXED_INTERNET"]').click()
+
+
+
+#wait.until(lambda browser: browser.find_element_by_xpath('//a[contains(@class, "oms-close-dialog")]'))
+#browser.find_element_by_xpath('//a[contains(@class, "oms-close-dialog")]').click()
+#browser.find_element_by_xpath('//i[contains(@class, "icon-Internetlaptop")]').click()
 
 for i in range(args.repeat):
   print ("Round :", i+1)
