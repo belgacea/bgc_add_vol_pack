@@ -62,14 +62,14 @@ if args.headless :
 browser = webdriver.Chrome('/Users/ec/Applications/chromedriver')
 
 print ("Login ...")
-#browser.get('https://www.belgacom.be/login/fr/?ru=https%3A%2F%2Fadmit.belgacom.be%2F&pv=fls')
-browser.get('http://www.proximus.be/fr/personal/?')
+#browser.get('http://www.proximus.be/fr/personal/?')
+browser.get('https://admit.belgacom.be')
 time.sleep(3)
 wait = WebDriverWait(browser, 30)
-wait.until(lambda browser: browser.find_element_by_xpath('//a[contains(@class, "close-reveal-modal")]'))
-browser.find_element_by_xpath('//a[contains(@class, "close-reveal-modal")]').click()
-wait.until(lambda browser: browser.find_element_by_xpath('//a[contains(@class, "rs-btn rs-btn-neg right")]'))
-browser.find_element_by_xpath('//a[contains(@class, "rs-btn rs-btn-neg right")]').click()
+#wait.until(lambda browser: browser.find_element_by_xpath('//a[contains(@class, "close-reveal-modal")]'))
+#browser.find_element_by_xpath('//a[contains(@class, "close-reveal-modal")]').click()
+#wait.until(lambda browser: browser.find_element_by_xpath('//a[contains(@class, "rs-btn rs-btn-neg right")]'))
+#browser.find_element_by_xpath('//a[contains(@class, "rs-btn rs-btn-neg right")]').click()
 
 
 wait.until(lambda browser: browser.find_element_by_xpath('//iframe[@name="loginIframe"]'))
@@ -79,13 +79,13 @@ browser.find_element_by_xpath('//input[@id="loginForm:userName"]').send_keys(arg
 browser.find_element_by_xpath('//input[@id="loginForm:password"]').send_keys(args.password)
 browser.find_element_by_xpath('//input[@id="loginForm:continue"]').click()
 
-wait.until(lambda browser: browser.find_element_by_xpath('//a[@id="eservicesUrlId"]'))
-browser.find_element_by_xpath('//a[@id="eservicesUrlId"]').click()
+#wait.until(lambda browser: browser.find_element_by_xpath('//a[@id="eservicesUrlId"]'))
+#browser.find_element_by_xpath('//a[@id="eservicesUrlId"]').click()
 
 
 
-wait.until(lambda browser: browser.find_element_by_xpath('//a[text()="Vers MyProximus"]'))
-browser.find_element_by_xpath('//a[text()="Vers MyProximus"]').click()
+#wait.until(lambda browser: browser.find_element_by_xpath('//a[text()="Vers MyProximus"]'))
+#browser.find_element_by_xpath('//a[text()="Vers MyProximus"]').click()
 print ("Login done")
 
 
@@ -93,7 +93,7 @@ print ("Login done")
 wait.until(lambda browser: browser.find_element_by_xpath('//a[text()="Mes produits"]'))
 browser.find_element_by_xpath('//a[text()="Mes produits"]').click()
 
-print ("jusq'ici c'est bon")
+print ("jusqu'ici c'est bon")
 
 real_url = "https://admit.belgacom.be/eservices/wps/myportal/myProducts?category=INTERNET&subcategory=FIXED_INTERNET&packReferenceId={0}&product={1}".format(args.pack,args.product)
 browser.get(real_url)
