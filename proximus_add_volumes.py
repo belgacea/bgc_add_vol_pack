@@ -24,8 +24,10 @@ Changelog :
     - Headless mode added as optional parameter
     - repeat and packSize are optional with default value to 1 pack of 150 GB
 """
+import sys
 import time
 import argparse
+
 parser = argparse.ArgumentParser(description='Add extra data volume pack to Belgacom Internet')
 parser.add_argument('login', type=str, help='Belgacom login email')
 parser.add_argument('password', type=str, help='Belgacom password')

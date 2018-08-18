@@ -1,7 +1,4 @@
-
-![mesScripts](https://sirenacorp.be/wp-content/uploads/2016/01/logo-1.png)
-
-bgc_add_vol_pack.py
+proximus_add_volumes.py
 ===
 
 The unlimited volume of Belgacom/Proximus is, in fact, limited. And when this limit is reached, your connection is nearly useless because the very low speed of it.
