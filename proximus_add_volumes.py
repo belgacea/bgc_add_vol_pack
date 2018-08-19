@@ -24,6 +24,7 @@ Changelog :
     - Headless mode added as optional parameter
     - repeat and packSize are optional with default value to 1 pack of 150 GB
 """
+import logging
 import time
 import argparse
 # pip3 install --user selenium
@@ -32,97 +33,79 @@ from selenium.webdriver.support.ui import WebDriverWait
 # pip3 install --user pyvirtualdisplay
 from pyvirtualdisplay import Display
 
-parser = argparse.ArgumentParser(description='Add extra data volume pack to Belgacom Internet')
-parser.add_argument('login', type=str, help='Belgacom login email')
-parser.add_argument('password', type=str, help='Belgacom password')
-parser.add_argument('--repeat', type=int, default=1, help='Number of volume packs to add (1 pack by default)')
-parser.add_argument('--packSize', type=str, default='150', help='Volume size of the pack to add (150 GB by default)')
-parser.add_argument('--headless', type=int, default=1,
-                    help='Headless mode (enabled by default ; using xvfb)')  # , action='store_true'
-parser.add_argument('--product', type=str, default='', help='Product number (eg: fc123456)')  # , action='store_true'
-parser.add_argument('--pack', type=str, default='2187090', help='PackReferenceId')  # , action='store_true'
-
-args = parser.parse_args()
-
-if args.headless:
-    display = Display(visible=0, size=(1920, 1080))
-    display.start()
-
-# browser = webdriver.Firefox()
-browser = webdriver.Chrome('/Users/ec/Applications/chromedriver')
-
-print("Login ...")
-# browser.get('http://www.proximus.be/fr/personal/?')
-browser.get('https://admit.belgacom.be')
-time.sleep(3)
-wait = WebDriverWait(browser, 30)
-# wait.until(lambda browser: browser.find_element_by_xpath('//a[contains(@class, "close-reveal-modal")]'))
-# browser.find_element_by_xpath('//a[contains(@class, "close-reveal-modal")]').click()
-# wait.until(lambda browser: browser.find_element_by_xpath('//a[contains(@class, "rs-btn rs-btn-neg right")]'))
-# browser.find_element_by_xpath('//a[contains(@class, "rs-btn rs-btn-neg right")]').click()
+log = logging.getLogger("proximus_add_volumes")
 
 
-wait.until(lambda browser: browser.find_element_by_xpath('//iframe[@name="loginIframe"]'))
-browser.switch_to_frame(browser.find_element_by_xpath('//iframe[@name="loginIframe"]'))
-browser.switch_to_frame(browser.find_element_by_xpath('//iframe[@name="frame"]'))
-browser.find_element_by_xpath('//input[@id="loginForm:userName"]').send_keys(args.login)
-browser.find_element_by_xpath('//input[@id="loginForm:password"]').send_keys(args.password)
-browser.find_element_by_xpath('//input[@id="loginForm:continue"]').click()
+def main(args):
+    display = None
+    if args.headless:
+        display = Display(visible=0, size=(1920, 1080))
+        display.start()
 
-# wait.until(lambda browser: browser.find_element_by_xpath('//a[@id="eservicesUrlId"]'))
-# browser.find_element_by_xpath('//a[@id="eservicesUrlId"]').click()
+    log.info("Starting ...")
+    browser = webdriver.Firefox()
+    # browser = webdriver.Chrome(args.driver)
+    # https://stackoverflow.com/questions/34164831/selenium-crashing-chrome-automation-extension-has-crashed
+
+    browser.get('https://www.proximus.be/login')
+    time.sleep(3)
+    wait = WebDriverWait(browser, 30)
+
+    wait.until(lambda browser: browser.find_element_by_xpath('//a[text()="Accepter"]'))
+    browser.find_element_by_xpath('//a[text()="Accepter"]').click()
+    log.info("Cookies accepted mthfckr..")
+
+    wait.until(lambda browser: browser.find_element_by_xpath('//a[text()="Fermer"]'))
+    browser.find_element_by_xpath('//a[text()="Fermer"]').click()
+    log.info("Closing GDPR fckng popup..")
+
+    wait.until(lambda browser: browser.find_element_by_xpath('//input[@id="username"]'))
+    log.info("Login...")
+    browser.find_element_by_xpath('//input[@id="username"]').send_keys(args.login)
+    browser.find_element_by_xpath('//input[@id="logincredentials"]').click()
+
+    wait.until(lambda browser: browser.find_element_by_xpath('//input[@id="password"]'))
+    browser.find_element_by_xpath('//input[@id="password"]').send_keys(args.password)
+    browser.find_element_by_xpath('//input[@id="signin"]').click()
+
+    wait.until(lambda browser: browser.find_element_by_xpath('//a[text()="Mes produits"]'))
+    log.info("Logged in !")
+    browser.find_element_by_xpath('//a[text()="Mes produits"]').click()
+
+    real_url = "https://www.proximus.be/myproximus/fr/Personal/services/My-Products__/details/Internet/{0}".format(args.product)
+    browser.get(real_url)
+
+    for i in range(args.repeat):
+        log.info("Step ", i + 1)
+        wait.until(lambda browser: browser.find_element_by_xpath('//button[text()="Commander"]'))
+        browser.find_element_by_xpath('//button[text()="Commander"]').click()
+        log.info("Ordering pack..")
+
+        wait.until(lambda browser: browser.find_element_by_xpath('//input[@id="termsAndconditionsCheckBox"]'))
+        browser.find_element_by_xpath('//input[@id="termsAndconditionsCheckBox"]').click()
+        log.info("Terms agreement..")
+        wait.until(lambda browser: browser.find_element_by_xpath('//button[text()="Activer" and not(@disabled)]'))
+        browser.find_element_by_xpath('//button[text()="Activer"]').click()
+        log.info("Activation !")
+
+    browser.quit()
+
+    if args.headless == "yes":
+        display.stop()
 
 
-# wait.until(lambda browser: browser.find_element_by_xpath('//a[text()="Vers MyProximus"]'))
-# browser.find_element_by_xpath('//a[text()="Vers MyProximus"]').click()
-print("Login done")
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description='Add extra data volume pack to Proximus subscription')
+    parser.add_argument('login', type=str, help='Proximus login email')
+    parser.add_argument('password', type=str, help='Proximus password')
+    parser.add_argument('--repeat', type=int, default=1, help='Number of volume packs to add (1 pack by default)')
+    parser.add_argument('--packSize', type=str, default='150',
+                        help='Volume size of the pack to add (150 GB by default)')
+    # NB : 150GB is now the only available pack size
+    parser.add_argument('--headless', type=int, default=1,
+                        help='Headless mode (enabled by default ; using xvfb)')  # , action='store_true'
+    parser.add_argument('--product', type=str, help='Product number (eg: 105487628394)')  # , action='store_true'
+    parser.add_argument('--driver', type=str, help='DriverPath')
 
-wait.until(lambda browser: browser.find_element_by_xpath('//a[text()="Mes produits"]'))
-browser.find_element_by_xpath('//a[text()="Mes produits"]').click()
-
-print("jusqu'ici c'est bon")
-
-real_url = "https://admit.belgacom.be/eservices/wps/myportal/myProducts?category=INTERNET&subcategory=FIXED_INTERNET&packReferenceId={0}&product={1}".format(
-    args.pack, args.product)
-browser.get(real_url)
-
-# wait.until(lambda browser: browser.find_element_by_xpath('//a[contains(@href,"category=INTERNET&subcategory=FIXED_INTERNET"]'))
-# browser.find_element_by_xpath('//a[contains(@href,"category=INTERNET&subcategory=FIXED_INTERNET"]').click()
-
-
-# wait.until(lambda browser: browser.find_element_by_xpath('//a[contains(@class, "oms-close-dialog")]'))
-# browser.find_element_by_xpath('//a[contains(@class, "oms-close-dialog")]').click()
-# browser.find_element_by_xpath('//i[contains(@class, "icon-Internetlaptop")]').click()
-
-for i in range(args.repeat):
-    print("Round :", i + 1)
-    print("Choosing Volume pack " + args.packSize + " free")
-    wait.until(lambda browser: browser.find_element_by_xpath('//a[@href="#pb-tabs-notActivated"]'))
-    browser.find_element_by_xpath('//a[@href="#pb-tabs-notActivated"]').click()
-
-    elements = browser.find_elements_by_xpath('//span[contains(@class,"og-unit")]')
-    for element in elements:
-        extraVol = "Extra Volume " + args.packSize + " GB"
-        if extraVol in element.get_attribute("innerHTML"):
-            element.click()
-            break
-    time.sleep(1)
-    myProduct = "myProducts/myOrder?selectedOption=hbs_volume_pack_" + args.packSize + "_free"
-    print("My Product = ", myProduct)
-    browser.find_element_by_xpath('//a[contains(@href,"' + myProduct + '")]').click()
-
-    wait.until(lambda browser: browser.find_element_by_xpath('//a[contains(@class,"pcp-order-next")]'))
-    browser.find_element_by_xpath('//a[contains(@class,"pcp-order-next")]').click()
-
-    print("Approving general terms")
-    wait.until(lambda browser: browser.find_element_by_xpath('//input[@id="generalTerms"]'))
-    browser.find_element_by_xpath('//input[@id="generalTerms"]').click()
-    browser.find_element_by_xpath('//a[@eventdetail="confirmOrderLink"]').click()
-
-    print("Confirmation")
-    browser.find_element_by_xpath('//a[@href="/eservices/wps/myportal/myProducts"]').click()
-
-browser.quit()
-
-if args.headless == "yes":
-    display.stop()
+    arguments = parser.parse_args()
+    main(arguments)
