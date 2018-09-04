@@ -24,6 +24,7 @@ Changelog :
     - Headless mode added as optional parameter
     - repeat and packSize are optional with default value to 1 pack of 150 GB
 """
+import sys
 import logging
 import time
 import argparse
@@ -34,7 +35,13 @@ from selenium.webdriver.support.ui import WebDriverWait
 from pyvirtualdisplay import Display
 
 log = logging.getLogger("proximus_add_volumes")
+log.setLevel(logging.INFO)
 
+ch = logging.StreamHandler(sys.stdout)
+ch.setLevel(logging.DEBUG)
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+ch.setFormatter(formatter)
+log.addHandler(ch)
 
 def main(args):
     display = None
@@ -49,15 +56,29 @@ def main(args):
 
     browser.get('https://www.proximus.be/login')
     time.sleep(3)
-    wait = WebDriverWait(browser, 30)
+    wait = WebDriverWait(browser, 10)
 
-    wait.until(lambda browser: browser.find_element_by_xpath('//a[text()="Accepter"]'))
-    browser.find_element_by_xpath('//a[text()="Accepter"]').click()
+    # TODO reduce this fckng selector
+    wait.until(lambda browser: browser.find_element_by_xpath('//iframe[contains(@src,"https://consent-pref.trustarc.com/?type=proximus&site=proximus.com&action=notice&country=be&locale=fr&behavior=expressed&layout=default_eu&from=https://consent.trustarc.com/")]'))
+    frame = browser.find_element_by_xpath('//iframe[contains(@src,"https://consent-pref.trustarc.com/?type=proximus&site=proximus.com&action=notice&country=be&locale=fr&behavior=expressed&layout=default_eu&from=https://consent.trustarc.com/")]')
+    log.info("TEXT : " + frame.text)
+    log.info("VALUE : " + frame.get_attribute("id"))
+
+    browser.switch_to.frame(frame)
+    log.info("Switching to cookie shitty frame..")
+
+    # //a[contains(@class, "call") and @role="button" and text()="Accepter"]
+    wait.until(lambda browser: browser.find_element_by_xpath(
+        '//a[contains(@class, "call") and @role="button" and text()="Accepter"]'))
+    browser.find_element_by_xpath('//a[contains(@class, "call") and @role="button" and text()="Accepter"]').click()
     log.info("Cookies accepted mthfckr..")
 
-    wait.until(lambda browser: browser.find_element_by_xpath('//a[text()="Fermer"]'))
-    browser.find_element_by_xpath('//a[text()="Fermer"]').click()
+    wait.until(lambda browser: browser.find_element_by_xpath('//a[@id="gwt-debug-close_id"]'))
+    browser.find_element_by_xpath('//a[@id="gwt-debug-close_id"]').click()
     log.info("Closing GDPR fckng popup..")
+
+    browser.switch_to.default_content()
+    #TODO wait reloading
 
     wait.until(lambda browser: browser.find_element_by_xpath('//input[@id="username"]'))
     log.info("Login...")
