@@ -56,11 +56,10 @@ def main(args):
     browser = webdriver.Firefox()
     # browser = webdriver.Chrome(args.driver)
     # https://stackoverflow.com/questions/34164831/selenium-crashing-chrome-automation-extension-has-crashed
-
+    wait = WebDriverWait(browser, 120) # Huge time out because proximus servers are shit TODO arg 4 time out
     browser.get('https://www.proximus.be/login')
 
-    wait = WebDriverWait(browser, 10)
-
+    # Accepting cookies
     wait.until(lambda browser: browser.find_element_by_xpath(
         '//iframe[contains(@src,"https://consent-pref.trustarc.com/")]'))
     frame = browser.find_element_by_xpath('//iframe[contains(@src,"https://consent-pref.trustarc.com/")]')
@@ -97,51 +96,20 @@ def main(args):
     wait.until(lambda browser: EC.element_to_be_clickable(browser.find_element_by_xpath('//button[@id="signin"]')))
     browser.find_element_by_xpath('//button[@id="signin"]').click()
 
-    # TODO Check why connection aborted
-#Traceback (most recent call last):
-#   File "./proximus_add_volumes.py", line 142, in <module>
-#     main(arguments)
-#   File "./proximus_add_volumes.py", line 101, in main
-#     wait.until(lambda browser: browser.find_element_by_xpath('//a[text()="Mes produits"]'))
-#   File "C:\Program Files\Python35\lib\site-packages\selenium\webdriver\support\wait.py", line 71, in until
-#     value = method(self._driver)
-#   File "./proximus_add_volumes.py", line 101, in <lambda>
-#     wait.until(lambda browser: browser.find_element_by_xpath('//a[text()="Mes produits"]'))
-#   File "C:\Program Files\Python35\lib\site-packages\selenium\webdriver\remote\webdriver.py", line 387, in find_element_by_xpath
-#     return self.find_element(by=By.XPATH, value=xpath)
-#   File "C:\Program Files\Python35\lib\site-packages\selenium\webdriver\remote\webdriver.py", line 957, in find_element
-#     'value': value})['value']
-#   File "C:\Program Files\Python35\lib\site-packages\selenium\webdriver\remote\webdriver.py", line 312, in execute
-#     response = self.command_executor.execute(driver_command, params)
-#   File "C:\Program Files\Python35\lib\site-packages\selenium\webdriver\remote\remote_connection.py", line 472, in execute
-#     return self._request(command_info[0], url, body=data)
-#   File "C:\Program Files\Python35\lib\site-packages\selenium\webdriver\remote\remote_connection.py", line 495, in _request
-#     self._conn.request(method, parsed_url.path, body, headers)
-#   File "C:\Program Files\Python35\lib\http\client.py", line 1083, in request
-#     self._send_request(method, url, body, headers)
-#   File "C:\Program Files\Python35\lib\http\client.py", line 1128, in _send_request
-#     self.endheaders(body)
-#   File "C:\Program Files\Python35\lib\http\client.py", line 1079, in endheaders
-#     self._send_output(message_body)
-#   File "C:\Program Files\Python35\lib\http\client.py", line 913, in _send_output
-#     self.send(message_body)
-#   File "C:\Program Files\Python35\lib\http\client.py", line 885, in send
-#     self.sock.sendall(data)
-# ConnectionAbortedError: [WinError 10053] Une connexion ▒tablie a ▒t▒ abandonn▒e par un logiciel de votre ordinateur h▒te
-
-    time.sleep(10)
-    wait.until(lambda browser: browser.find_element_by_xpath('//a[text()="Mes produits"]'))
+    # Entering customer dashboard
+    wait.until(EC.url_to_be("https://www.proximus.be/myproximus/fr/Personal/services/My-overview__"))
     log.info("Logged in !")
-    browser.find_element_by_xpath('//a[text()="Mes produits"]').click()
 
     real_url = "https://www.proximus.be/myproximus/fr/Personal/services/My-Products__/details/Internet/{0}".format(args.product)
     browser.get(real_url)
     time.sleep(3)
 
     for i in range(args.repeat):
-        log.info("Step ", i + 1)
-        wait.until(lambda browser: browser.find_element_by_xpath('//button[text()="Commander"]'))
-        browser.find_element_by_xpath('//button[text()="Commander"]').click()
+        log.info("Step {0}".format(i + 1))
+        wait.until(lambda browser: browser.find_element_by_xpath(
+            "//div[contains(@data-ng-if, 'mpOptionData.option.orderType === \"IFF\"')"))
+        browser.find_element_by_xpath(
+            "//div[contains(@data-ng-if, 'mpOptionData.option.orderType === \"IFF\"')").click()
         log.info("Ordering pack..")
 
         wait.until(lambda browser: browser.find_element_by_xpath('//input[@id="termsAndconditionsCheckBox"]'))
