@@ -31,8 +31,10 @@ import argparse
 # pip3 install --user selenium
 from selenium import webdriver
 from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 # pip3 install --user pyvirtualdisplay
 from pyvirtualdisplay import Display
+
 
 log = logging.getLogger("proximus_add_volumes")
 log.setLevel(logging.INFO)
@@ -42,6 +44,7 @@ ch.setLevel(logging.DEBUG)
 formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 ch.setFormatter(formatter)
 log.addHandler(ch)
+
 
 def main(args):
     display = None
@@ -55,19 +58,18 @@ def main(args):
     # https://stackoverflow.com/questions/34164831/selenium-crashing-chrome-automation-extension-has-crashed
 
     browser.get('https://www.proximus.be/login')
-    time.sleep(3)
+
     wait = WebDriverWait(browser, 10)
 
-    # TODO reduce this fckng selector
-    wait.until(lambda browser: browser.find_element_by_xpath('//iframe[contains(@src,"https://consent-pref.trustarc.com/?type=proximus&site=proximus.com&action=notice&country=be&locale=fr&behavior=expressed&layout=default_eu&from=https://consent.trustarc.com/")]'))
-    frame = browser.find_element_by_xpath('//iframe[contains(@src,"https://consent-pref.trustarc.com/?type=proximus&site=proximus.com&action=notice&country=be&locale=fr&behavior=expressed&layout=default_eu&from=https://consent.trustarc.com/")]')
+    wait.until(lambda browser: browser.find_element_by_xpath(
+        '//iframe[contains(@src,"https://consent-pref.trustarc.com/")]'))
+    frame = browser.find_element_by_xpath('//iframe[contains(@src,"https://consent-pref.trustarc.com/")]')
     log.info("TEXT : " + frame.text)
     log.info("VALUE : " + frame.get_attribute("id"))
 
     browser.switch_to.frame(frame)
     log.info("Switching to cookie shitty frame..")
 
-    # //a[contains(@class, "call") and @role="button" and text()="Accepter"]
     wait.until(lambda browser: browser.find_element_by_xpath(
         '//a[contains(@class, "call") and @role="button" and text()="Accepter"]'))
     browser.find_element_by_xpath('//a[contains(@class, "call") and @role="button" and text()="Accepter"]').click()
@@ -78,23 +80,63 @@ def main(args):
     log.info("Closing GDPR fckng popup..")
 
     browser.switch_to.default_content()
-    #TODO wait reloading
+    time.sleep(3)
 
     wait.until(lambda browser: browser.find_element_by_xpath('//input[@id="username"]'))
+
+    # Removing feedback shit
+    js = "var shit=document.getElementById('_hj_feedback_container');shit.parentNode.removeChild(shit)"
+    browser.execute_script(js)
+
     log.info("Login...")
     browser.find_element_by_xpath('//input[@id="username"]').send_keys(args.login)
-    browser.find_element_by_xpath('//input[@id="logincredentials"]').click()
+    browser.find_element_by_xpath('//button[@id="logincredentials"]').click()
 
     wait.until(lambda browser: browser.find_element_by_xpath('//input[@id="password"]'))
     browser.find_element_by_xpath('//input[@id="password"]').send_keys(args.password)
-    browser.find_element_by_xpath('//input[@id="signin"]').click()
+    wait.until(lambda browser: EC.element_to_be_clickable(browser.find_element_by_xpath('//button[@id="signin"]')))
+    browser.find_element_by_xpath('//button[@id="signin"]').click()
 
+    # TODO Check why connection aborted
+#Traceback (most recent call last):
+#   File "./proximus_add_volumes.py", line 142, in <module>
+#     main(arguments)
+#   File "./proximus_add_volumes.py", line 101, in main
+#     wait.until(lambda browser: browser.find_element_by_xpath('//a[text()="Mes produits"]'))
+#   File "C:\Program Files\Python35\lib\site-packages\selenium\webdriver\support\wait.py", line 71, in until
+#     value = method(self._driver)
+#   File "./proximus_add_volumes.py", line 101, in <lambda>
+#     wait.until(lambda browser: browser.find_element_by_xpath('//a[text()="Mes produits"]'))
+#   File "C:\Program Files\Python35\lib\site-packages\selenium\webdriver\remote\webdriver.py", line 387, in find_element_by_xpath
+#     return self.find_element(by=By.XPATH, value=xpath)
+#   File "C:\Program Files\Python35\lib\site-packages\selenium\webdriver\remote\webdriver.py", line 957, in find_element
+#     'value': value})['value']
+#   File "C:\Program Files\Python35\lib\site-packages\selenium\webdriver\remote\webdriver.py", line 312, in execute
+#     response = self.command_executor.execute(driver_command, params)
+#   File "C:\Program Files\Python35\lib\site-packages\selenium\webdriver\remote\remote_connection.py", line 472, in execute
+#     return self._request(command_info[0], url, body=data)
+#   File "C:\Program Files\Python35\lib\site-packages\selenium\webdriver\remote\remote_connection.py", line 495, in _request
+#     self._conn.request(method, parsed_url.path, body, headers)
+#   File "C:\Program Files\Python35\lib\http\client.py", line 1083, in request
+#     self._send_request(method, url, body, headers)
+#   File "C:\Program Files\Python35\lib\http\client.py", line 1128, in _send_request
+#     self.endheaders(body)
+#   File "C:\Program Files\Python35\lib\http\client.py", line 1079, in endheaders
+#     self._send_output(message_body)
+#   File "C:\Program Files\Python35\lib\http\client.py", line 913, in _send_output
+#     self.send(message_body)
+#   File "C:\Program Files\Python35\lib\http\client.py", line 885, in send
+#     self.sock.sendall(data)
+# ConnectionAbortedError: [WinError 10053] Une connexion ▒tablie a ▒t▒ abandonn▒e par un logiciel de votre ordinateur h▒te
+
+    time.sleep(10)
     wait.until(lambda browser: browser.find_element_by_xpath('//a[text()="Mes produits"]'))
     log.info("Logged in !")
     browser.find_element_by_xpath('//a[text()="Mes produits"]').click()
 
     real_url = "https://www.proximus.be/myproximus/fr/Personal/services/My-Products__/details/Internet/{0}".format(args.product)
     browser.get(real_url)
+    time.sleep(3)
 
     for i in range(args.repeat):
         log.info("Step ", i + 1)
