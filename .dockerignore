@@ -1,0 +1,9 @@
+.dockerignore
+.git
+README.md
+LICENCE
+run.sh
+run-template.sh
+dev-template.env
+geckodriver.log
+.idea

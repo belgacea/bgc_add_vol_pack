@@ -16,13 +16,6 @@ Script modified by :
 
 Github : 
   https://github.com/shakasan/bgc_add_vol_pack
-
-Changelog :
-    - Updated for Python3
-    - Any volume pack sizes
-    - WebDriverWait increased up to 20 to try to avoid login failures
-    - Headless mode added as optional parameter
-    - repeat and packSize are optional with default value to 1 pack of 150 GB
 """
 import sys
 import logging
@@ -35,19 +28,13 @@ from selenium.webdriver.support import expected_conditions as EC
 # pip3 install --user pyvirtualdisplay
 from pyvirtualdisplay import Display
 
-
 log = logging.getLogger("proximus_add_volumes")
 log.setLevel(logging.INFO)
 
-ch = logging.StreamHandler(sys.stdout)
-ch.setLevel(logging.DEBUG)
-formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-ch.setFormatter(formatter)
-log.addHandler(ch)
 
-
-# TODO read me + dockerfile & docker-compose
 def main(args):
+    if args.log == 1:
+        console_log()
     display = None
     if args.headless:
         display = Display(visible=0, size=(1920, 1080))
@@ -55,8 +42,8 @@ def main(args):
 
     log.info("Starting..")
     browser = webdriver.Firefox()
-    # browser = webdriver.Chrome(args.driver)
     # TODO https://stackoverflow.com/questions/34164831/selenium-crashing-chrome-automation-extension-has-crashed
+    # browser = webdriver.Chrome(args.driver)
     wait = WebDriverWait(browser, args.timeout)
     browser.get('https://www.proximus.be/login')
 
@@ -131,19 +118,25 @@ def remove_feedback_button(browser):
     browser.execute_script(js)
 
 
+def console_log():
+    ch = logging.StreamHandler(sys.stdout)
+    ch.setLevel(logging.DEBUG)
+    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    ch.setFormatter(formatter)
+    log.addHandler(ch)
+
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Add extra data volume pack to Proximus subscription')
     parser.add_argument('login', type=str, help='Proximus login email')
     parser.add_argument('password', type=str, help='Proximus password')
     parser.add_argument('--repeat', type=int, default=1, help='Number of volume packs to add (1 pack by default)')
-    parser.add_argument('--packSize', type=str, default='150',
-                        help='Volume size of the pack to add (150 GB by default)')
-    # NB : 150GB is now the only available pack size
     parser.add_argument('--headless', type=int, default=1,
-                        help='Headless mode (enabled by default ; using xvfb)')  # , action='store_true'
-    parser.add_argument('--product', type=str, help='Product number (eg: 105487628394)')  # , action='store_true'
+                        help='Headless mode (enabled by default ; using xvfb)')
+    parser.add_argument('--product', type=str, help='Product number (eg: 105487628394)')
     parser.add_argument('--driver', type=str, help='DriverPath')
     parser.add_argument('--timeout', type=int, default=120, help='Time out in seconds') # Huge time out because proximus servers are shit
+    parser.add_argument('--log', type=int, default=0, help='Console log')
 
     arguments = parser.parse_args()
     main(arguments)

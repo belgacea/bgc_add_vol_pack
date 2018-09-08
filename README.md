@@ -9,20 +9,18 @@ Parameters
 ===
 
 ```
-usage: bgc_add_vol_pack.py [-h] [--repeat REPEAT] [--packSize PACKSIZE]
-                           [--headless HEADLESS]
-                           login password
+usage: bgc_add_vol_pack.py [-h] [--repeat REPEAT] [--headless HEADLESS] login password
 
-Add extra data volume pack to Belgacom Internet
+Add extra data volume pack to Proximus Internet
+NB : 150GB is now the only available pack size for now
 
 positional arguments:
-  login                Belgacom login email
-  password             Belgacom password
+  login                Proximus login email
+  password             Proximus password
 
 optional arguments:
   -h, --help           show this help message and exit
   --repeat REPEAT      Number of volume packs to add (1 pack by default)
-  --packSize PACKSIZE  Volume size of the pack to add (150 GB by default)
   --headless HEADLESS  Headless mode (enabled by default ; using xvfb)
 ```
 Requirements
@@ -45,19 +43,18 @@ And the following cmdline tool (headless mode) :
 Examples of use
 ===
 
-Add 1 pack of 150 GB (which are default values)
+Add 1 pack
 ```
-./bgc_add_vol_pack.py my_login my_password
+./proximus_add_volumes.py --product=PROXIMUS_SUBSCRIBTION_NUMBER LOGIN PASSWORD
+```
+Add 5 packs
+```
+./proximus_add_volumes.py --repeat 5 --product=PROXIMUS_SUBSCRIBTION_NUMBER LOGIN PASSWORD
 ```
 
-Add 3 packs of 150 GB in headless mode
+Add 10 packs in headless mode disable (FireFox will be opened)
 ```
-./bgc_add_vol_pack.py my_login my_password --repeat 3 --packSize 150
-```
-
-Add 10 packs of 20 GB in headless mode disable (FireFox will be opened)
-```
-./bgc_add_vol_pack.py my_login my_password --repeat 10 --packSize 20 --headless 0
+./proximus_add_volumes.py --repeat 5 --headless 0 --product=PROXIMUS_SUBSCRIBTION_NUMBER LOGIN PASSWORD
 ```
 
 Credits
@@ -78,12 +75,3 @@ This program is distributed in the hope that it will be useful, but WITHOUT ANY 
 You should have received a copy of the GNU Affero General Public License along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 Link to the post on Tuxicoman website : https://tuxicoman.jesuislibre.net/2016/05/internet-vraiment-illimite-chez-belgacomproximus.html
-
-Improvements - Changelog
-===
-
-* Updated for Python3
-* Any volume pack sizes
-* WebDriverWait increased up to 20 to *try* to avoid login failures
-* Headless mode added as optional parameter
-* repeat and packSize parameters are optional with default value to 1 pack of 150 GB

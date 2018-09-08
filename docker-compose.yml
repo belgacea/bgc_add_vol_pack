@@ -1,0 +1,7 @@
+version: '2'
+services:
+  cronjob:
+    container_name: proximus-add-volumes
+    image: proximus-add-volumes
+    build: .
+    env_file: dev.env
