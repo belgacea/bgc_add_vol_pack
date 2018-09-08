@@ -46,25 +46,24 @@ ch.setFormatter(formatter)
 log.addHandler(ch)
 
 
+# TODO read me + dockerfile & docker-compose
 def main(args):
     display = None
     if args.headless:
         display = Display(visible=0, size=(1920, 1080))
         display.start()
 
-    log.info("Starting ...")
+    log.info("Starting..")
     browser = webdriver.Firefox()
     # browser = webdriver.Chrome(args.driver)
-    # https://stackoverflow.com/questions/34164831/selenium-crashing-chrome-automation-extension-has-crashed
-    wait = WebDriverWait(browser, 120) # Huge time out because proximus servers are shit TODO arg 4 time out
+    # TODO https://stackoverflow.com/questions/34164831/selenium-crashing-chrome-automation-extension-has-crashed
+    wait = WebDriverWait(browser, args.timeout)
     browser.get('https://www.proximus.be/login')
 
     # Accepting cookies
     wait.until(lambda browser: browser.find_element_by_xpath(
         '//iframe[contains(@src,"https://consent-pref.trustarc.com/")]'))
     frame = browser.find_element_by_xpath('//iframe[contains(@src,"https://consent-pref.trustarc.com/")]')
-    log.info("TEXT : " + frame.text)
-    log.info("VALUE : " + frame.get_attribute("id"))
 
     browser.switch_to.frame(frame)
     log.info("Switching to cookie shitty frame..")
@@ -81,13 +80,11 @@ def main(args):
     browser.switch_to.default_content()
     time.sleep(3)
 
+    # Login
     wait.until(lambda browser: browser.find_element_by_xpath('//input[@id="username"]'))
+    remove_feedback_button(browser)
 
-    # Removing feedback shit
-    js = "var shit=document.getElementById('_hj_feedback_container');shit.parentNode.removeChild(shit)"
-    browser.execute_script(js)
-
-    log.info("Login...")
+    log.info("Login..")
     browser.find_element_by_xpath('//input[@id="username"]').send_keys(args.login)
     browser.find_element_by_xpath('//button[@id="logincredentials"]').click()
 
@@ -102,27 +99,36 @@ def main(args):
 
     real_url = "https://www.proximus.be/myproximus/fr/Personal/services/My-Products__/details/Internet/{0}".format(args.product)
     browser.get(real_url)
-    time.sleep(3)
 
+    # Ordering volume packs
     for i in range(args.repeat):
         log.info("Step {0}".format(i + 1))
         wait.until(lambda browser: browser.find_element_by_xpath(
-            "//div[contains(@data-ng-if, 'mpOptionData.option.orderType === \"IFF\"')"))
+            '//button[@data-mp-analytics-element-clicked="150 GB Extra Volume Free:order"]'))
         browser.find_element_by_xpath(
-            "//div[contains(@data-ng-if, 'mpOptionData.option.orderType === \"IFF\"')").click()
+            '//button[@data-mp-analytics-element-clicked="150 GB Extra Volume Free:order"]').click()
         log.info("Ordering pack..")
 
         wait.until(lambda browser: browser.find_element_by_xpath('//input[@id="termsAndconditionsCheckBox"]'))
         browser.find_element_by_xpath('//input[@id="termsAndconditionsCheckBox"]').click()
         log.info("Terms agreement..")
-        wait.until(lambda browser: browser.find_element_by_xpath('//button[text()="Activer" and not(@disabled)]'))
-        browser.find_element_by_xpath('//button[text()="Activer"]').click()
-        log.info("Activation !")
 
+        wait.until(lambda browser: EC.element_to_be_clickable(browser.find_element_by_xpath(
+            '//button[@data-ng-click="confirm()"]')))
+        browser.find_element_by_xpath('//button[@data-ng-click="confirm()"]').click()
+        log.info("Activation")
+
+    log.info("Done !")
     browser.quit()
 
     if args.headless == "yes":
         display.stop()
+
+
+def remove_feedback_button(browser):
+    # Removing feedback shit
+    js = "var shit=document.getElementById('_hj_feedback_container');shit.remove()"
+    browser.execute_script(js)
 
 
 if __name__ == '__main__':
@@ -137,6 +143,7 @@ if __name__ == '__main__':
                         help='Headless mode (enabled by default ; using xvfb)')  # , action='store_true'
     parser.add_argument('--product', type=str, help='Product number (eg: 105487628394)')  # , action='store_true'
     parser.add_argument('--driver', type=str, help='DriverPath')
+    parser.add_argument('--timeout', type=int, default=120, help='Time out in seconds') # Huge time out because proximus servers are shit
 
     arguments = parser.parse_args()
     main(arguments)
