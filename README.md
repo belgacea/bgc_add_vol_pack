@@ -9,7 +9,7 @@ Parameters
 ===
 
 ```
-usage: bgc_add_vol_pack.py [-h] [--repeat REPEAT] [--headless HEADLESS] login password
+usage: proximus_add_volumes.py [-h] [--repeat REPEAT] [--headless HEADLESS] login password
 
 Add extra data volume pack to Proximus Internet
 NB : 150GB is now the only available pack size for now

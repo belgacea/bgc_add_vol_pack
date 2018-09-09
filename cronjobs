@@ -1,0 +1,3 @@
+0 12 1 * * sh /script/run-env.sh
+# TODO test with a minute based cronjob
+# * * * * * sh /script/run-env.sh
