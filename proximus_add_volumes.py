@@ -69,6 +69,7 @@ def main(args):
 
     # Login
     wait.until(lambda browser: browser.find_element_by_xpath('//input[@id="username"]'))
+    wait.until(lambda browser: browser.find_element_by_id('_hj_feedback_container'))
     remove_feedback_button(browser)
 
     log.info("Login..")
