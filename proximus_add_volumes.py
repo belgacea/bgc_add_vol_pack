@@ -60,9 +60,9 @@ def main(args):
     browser.find_element_by_xpath('//a[contains(@class, "call") and @role="button" and text()="Accepter"]').click()
     log.info("Cookies accepted mthfckr..")
 
-    wait.until(lambda browser: browser.find_element_by_xpath('//a[@id="gwt-debug-close_id"]'))
-    browser.find_element_by_xpath('//a[@id="gwt-debug-close_id"]').click()
-    log.info("Closing GDPR fckng popup..")
+    # wait.until(lambda browser: browser.find_element_by_xpath('//a[@id="gwt-debug-close_id"]'))
+    # browser.find_element_by_xpath('//a[@id="gwt-debug-close_id"]').click()
+    # log.info("Closing GDPR fckng popup..")
 
     browser.switch_to.default_content()
     time.sleep(3)
