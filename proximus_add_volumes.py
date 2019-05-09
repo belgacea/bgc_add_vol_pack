@@ -74,7 +74,7 @@ def main(args):
 
     log.info("Login..")
     browser.find_element_by_xpath('//input[@id="username"]').send_keys(args.login)
-    browser.find_element_by_xpath('//button[@id="logincredentials"]').click()
+    # browser.find_element_by_xpath('//button[@id="logincredentials"]').click() # No longer needed
 
     wait.until(lambda browser: browser.find_element_by_xpath('//input[@id="password"]'))
     browser.find_element_by_xpath('//input[@id="password"]').send_keys(args.password)
@@ -114,9 +114,9 @@ def main(args):
 
 
 def remove_feedback_button(browser):
-    # Removing feedback shit
     js = "var shit=document.getElementById('_hj_feedback_container');shit.remove()"
     browser.execute_script(js)
+    log.info("Removing feedback shit")
 
 
 def console_log():
