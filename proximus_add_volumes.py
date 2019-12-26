@@ -23,6 +23,7 @@ import time
 import argparse
 # pip3 install --user selenium
 from selenium import webdriver
+from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 # pip3 install --user pyvirtualdisplay
@@ -47,30 +48,39 @@ def main(args):
     wait = WebDriverWait(browser, args.timeout)
     browser.get('https://www.proximus.be/login')
 
-    # Accepting cookies
-    wait.until(lambda browser: browser.find_element_by_xpath(
-        '//iframe[contains(@src,"https://consent-pref.trustarc.com/")]'))
-    frame = browser.find_element_by_xpath('//iframe[contains(@src,"https://consent-pref.trustarc.com/")]')
+    # TODO find out if possible to set timeout per wait call
 
-    browser.switch_to.frame(frame)
-    log.info("Switching to cookie shitty frame..")
+    try:
+        # Accepting cookies
+        wait.until(lambda browser: browser.find_element_by_xpath(
+            '//iframe[contains(@src,"https://consent-pref.trustarc.com/") and contains(@title, "TrustArc Cookie Consent Manager")]'))  # TODO merge with l59 in case of long loading
+        frame = browser.find_element_by_xpath('//iframe[contains(@src,"https://consent-pref.trustarc.com/") and contains(@title, "TrustArc Cookie Consent Manager")]')
 
-    wait.until(lambda browser: browser.find_element_by_xpath(
-        '//a[contains(@class, "call") and @role="button" and text()="Accepter"]'))
-    browser.find_element_by_xpath('//a[contains(@class, "call") and @role="button" and text()="Accepter"]').click()
-    log.info("Cookies accepted mthfckr..")
+        browser.switch_to.frame(frame)
+        log.info("Switching to cookie frame..")
+
+        wait.until(lambda browser: browser.find_element_by_xpath(
+            '//a[contains(@class, "call") and contains(@role, "button") and contains(text(), "Accepter")]'))
+        browser.find_element_by_xpath('//a[contains(@class, "call") and contains(@role, "button") and contains(text(), "Accepter")]').click()
+        log.info("Cookies accepted..")
+
+        browser.switch_to.default_content()
+        time.sleep(3)
+    except TimeoutException as e:
+        log.warning("Issue with GDPR cookie frame..", e)
+        pass
 
     # wait.until(lambda browser: browser.find_element_by_xpath('//a[@id="gwt-debug-close_id"]'))
     # browser.find_element_by_xpath('//a[@id="gwt-debug-close_id"]').click()
-    # log.info("Closing GDPR fckng popup..")
-
-    browser.switch_to.default_content()
-    time.sleep(3)
+    # log.info("Closing GDPR popup..")
 
     # Login
+    log.info("Waiting login fields..")
     wait.until(lambda browser: browser.find_element_by_xpath('//input[@id="username"]'))
-    wait.until(lambda browser: browser.find_element_by_id('_hj_feedback_container'))
-    remove_feedback_button(browser)
+
+    # TODO find out how to delete this shit without waiting
+    # wait.until(lambda browser: browser.find_element_by_id('_hj_feedback_container'))
+    # remove_feedback_button(browser)
 
     log.info("Login..")
     browser.find_element_by_xpath('//input[@id="username"]').send_keys(args.login)
@@ -92,9 +102,9 @@ def main(args):
     for i in range(args.repeat):
         log.info("Step {0}".format(i + 1))
         wait.until(lambda browser: browser.find_element_by_xpath(
-            '//button[@data-mp-analytics-element-clicked="150 GB Extra Volume Free:order"]'))
+            '//button[contains(@data-mp-analytics-element-clicked, "Extra Volume Free")]'))
         browser.find_element_by_xpath(
-            '//button[@data-mp-analytics-element-clicked="150 GB Extra Volume Free:order"]').click()
+            '//button[contains(@data-mp-analytics-element-clicked, "Extra Volume Free")]').click()
         log.info("Ordering pack..")
 
         wait.until(lambda browser: browser.find_element_by_xpath('//input[@id="termsAndconditionsCheckBox"]'))
@@ -116,7 +126,7 @@ def main(args):
 def remove_feedback_button(browser):
     js = "var shit=document.getElementById('_hj_feedback_container');shit.remove()"
     browser.execute_script(js)
-    log.info("Removing feedback shit")
+    log.info("Removing feedback button..")
 
 
 def console_log():
@@ -136,7 +146,7 @@ if __name__ == '__main__':
                         help='Headless mode (enabled by default ; using xvfb)')
     parser.add_argument('--product', type=str, help='Product number (eg: 105487628394)')
     parser.add_argument('--driver', type=str, help='DriverPath')
-    parser.add_argument('--timeout', type=int, default=120, help='Time out in seconds') # Huge time out because proximus servers are shit
+    parser.add_argument('--timeout', type=int, default=120, help='Time out in seconds') # Huge time out because proximus servers are not so good
     parser.add_argument('--log', type=int, default=0, help='Console log')
 
     arguments = parser.parse_args()
